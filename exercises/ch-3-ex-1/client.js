@@ -6,6 +6,7 @@ var querystring = require('querystring');
 var cons = require('consolidate');
 var randomstring = require("randomstring");
 var __ = require('underscore');
+const { access } = require("fs");
 __.string = require('underscore.string');
 
 var app = express();
@@ -68,7 +69,20 @@ app.get('/callback', function(req, res){
 		code: code,
 		redirect_uri: client.redirect_uris[0]
 	});
+	var headers = {
+		'Content-Type': 'application/x-www-form-urlencoded',
+		'Authorization': 'Basic ' + encodeClientCredentials(client.client_id, client.client_secret)
+	};
+	var tokRes = request('POST', authServer.tokenEndpoint, 
+		{
+			body: form_data,
+			headers: headers 
+		}
+	);
 	
+	var body = JSON.parse(tokRes.getBody());
+	access_token = body.access_token;
+	res.render('index', {access_token: body.access_token, scope: scope});
 });
 
 app.get('/fetch_resource', function(req, res) {
